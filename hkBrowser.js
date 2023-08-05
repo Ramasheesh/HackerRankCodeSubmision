@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer');
 require('dotenv').config();
-// const myPromise = require('./common/promiseFunctions');
+const {answers} = require('./code')
 let email = process.env.EMAIL;
 let password = process.env.PASSWORD;
 let cTab; // current Tab
@@ -67,12 +67,19 @@ promiseOfOpenBrowser //fullfil
     })
     .then(function(linkArr){
         console.log('links of all question received');
-        console.log('linkArr: ', linkArr);
+        // console.log('linkArr: ', linkArr);
         // solved question
+        let quesSoleverPromise = questionSolver(linkArr[0],0);
+        return quesSoleverPromise;
+    })
+    .then(function(){
+        console.log("qsn solved ");
     })
     .catch(function(err){
         console.log("erroe is: ",err);
     })
+
+
 function waitAndClick(algoBtnSelector){
     let slePromise = new Promise(function(reso,rej){
         let waitForSelectorPromise = cTab.waitForSelector(algoBtnSelector);
@@ -82,14 +89,82 @@ function waitAndClick(algoBtnSelector){
             return clickOnPromise;
         })
         .then(function(){
-            console.log("algo btn clicked");
+            // console.log("algo btn clicked");
             reso();
             
         }) 
         .catch(function(err){
-            console.log("Error is: ",err);
+            rej(err)
         })
     });
     return slePromise;
 }
 
+// url = question 
+// ind = answer
+function questionSolver(url, idx) {
+    return new Promise(function(resolve,reject){
+        let fullLink = `https://www.hackerrank.com/${url}`;
+        let linkQuesnPromise = cTab.goto(fullLink);
+        linkQuesnPromise
+        .then(function(){
+            console.log('Question oppend');
+            // trick the custom input
+            let waitForCheckBoxClickPromise = waitAndClick('.checkbox-input');
+            return waitForCheckBoxClickPromise;
+        })
+        .then(function(){
+            // select the box there code will be typed
+            let waitForTextBoxPromise = waitAndClick('.custominput');
+            return waitForTextBoxPromise;
+        })
+        .then(function(){
+            let codeTypeInCustomBox = cTab.type('.custominput',answers[idx]);
+            return codeTypeInCustomBox;
+        })
+        .then(function(){
+            let pressControlKeyPromise = cTab.keyboard.press('Control');
+            let selAllKeyPromise = cTab.keyboard.press('A');
+            let c =  pressControlKeyPromise+selAllKeyPromise;
+            return c;
+        })
+        // .then(function(){
+        //     let selAllKeyPromise = cTab.keyboard.press('A');
+        //     return selAllKeyPromise;
+        // })
+        .then(function(){
+            let selXKeyPromise = cTab.keyboard.press('X');
+            return selXKeyPromise;
+        })
+
+        .then(function(){
+            let upControl = cTab.keyboard.up('Control');
+            return upControl;
+        })
+        .then(function(){
+            return waitAndClick('.monaco-editor.no-user-select.vs');
+        })
+        .then(function(){
+            let pressControlKeyPromise = cTab.keyboard.press('Control');
+            let selAllKeyPromise = cTab.keyboard.press('A');
+            let c =  pressControlKeyPromise+selAllKeyPromise;
+            return c;
+        })
+        .then(function(){
+            let pasteVKeyPressPromise = cTab.keyboard.press('V');
+            return pasteVKeyPressPromise;
+        })
+        .then(function(){
+            let downControlKeyPromise = cTab.keyboard.up('Control');
+            return downControlKeyPromise;
+        })
+        .then(function(){
+            let clickSubmitBtnPromiise = waitAndClick('.ui-btn.ui-btn-normal.ui-btn-primary.pull-right.hr-monaco-submit.ui-btn-styled');
+            return clickSubmitBtnPromiise;
+        }).then(function(){
+            console.log('Code Submitted successfully');
+        })
+        .catch(function(err){
+            reject(err);
+        })
+})}
