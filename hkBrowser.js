@@ -9,7 +9,7 @@ let cTab; // current Tab
 let promiseOfOpenBrowser = puppeteer.launch({
     headless:false, // true
     defaultViewport:null,
-    args:["--start-maximized"],//"--no-sandbox", "--headless", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1280,960"
+    args:["--no-sandbox"],//"--no-sandbox","--start-maximized", "--headless", "--disable-dev-shm-usage", "--disable-gpu", "--window-size=1280,960"
     // executablePath:'C:\Program Files\Google\Chrome\Application\chrome.exe',
 
 });
@@ -29,12 +29,12 @@ promiseOfOpenBrowser //fullfil
         return visitingLoginPasePromise;
     }).then(function() { // response of http
         console.log("Hacker Rank Login page Opened");
-        let emailWiilBeTypedPromise = cTab.type("input[name=username]", email);
+        let emailWiilBeTypedPromise = cTab.type("input[name=username]", email ,{delay:100});
         return emailWiilBeTypedPromise;
     })
     .then(function(){
         console.log("Email typing compleated");
-        let passwordWillBeTypedPromise = cTab.type("input[name=password]", password)
+        let passwordWillBeTypedPromise = cTab.type("input[name=password]", password ,{delay:100});
         return passwordWillBeTypedPromise;
     })
     .then(function(){
@@ -70,7 +70,12 @@ promiseOfOpenBrowser //fullfil
         // console.log('linkArr: ', linkArr);
         // solved question
         let quesSoleverPromise = questionSolver(linkArr[0],0);
-        return quesSoleverPromise;
+        for (let i = 1; i < linkArr.length; i++) {
+            quesSoleverPromise = quesSoleverPromise.then(function () {
+                return questionSolver(linkArr[i],i , {delay:1000});
+            })
+            //a=10-> a=a+1
+        }
     })
     .then(function(){
         console.log("qsn solved ");
@@ -115,11 +120,11 @@ function questionSolver(url, idx) {
         })
         .then(function(){
             // select the box there code will be typed
-            let waitForTextBoxPromise = waitAndClick('.custominput');
+            let waitForTextBoxPromise = waitAndClick('.custominput');// , {delay:100}
             return waitForTextBoxPromise;
         })
         .then(function(){
-            let codeTypeInCustomBox = cTab.type('.custominput',answers[idx]);
+            let codeTypeInCustomBox = cTab.type('.custominput',answers[idx] ,{delay:20});
             return codeTypeInCustomBox;
         })
         .then(function(){
@@ -151,7 +156,7 @@ function questionSolver(url, idx) {
             return c;
         })
         .then(function(){
-            let pasteVKeyPressPromise = cTab.keyboard.press('V');
+            let pasteVKeyPressPromise = cTab.keyboard.press('V',{delay:3000});
             return pasteVKeyPressPromise;
         })
         .then(function(){
@@ -159,10 +164,11 @@ function questionSolver(url, idx) {
             return downControlKeyPromise;
         })
         .then(function(){
-            let clickSubmitBtnPromiise = waitAndClick('.ui-btn.ui-btn-normal.ui-btn-primary.pull-right.hr-monaco-submit.ui-btn-styled');
+            let clickSubmitBtnPromiise = waitAndClick('.ui-btn.ui-btn-normal.ui-btn-primary.pull-right.hr-monaco-submit.ui-btn-styled' );
             return clickSubmitBtnPromiise;
         }).then(function(){
             console.log('Code Submitted successfully');
+            resolve();
         })
         .catch(function(err){
             reject(err);
